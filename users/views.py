@@ -1,0 +1,100 @@
+"""users views module."""
+
+from rest_framework.response import Response
+from rest_framework import permissions
+from rest_framework.views import APIView
+from rest_framework import status
+from django.contrib.auth import logout
+from rest_framework_simplejwt.tokens import RefreshToken
+from dj_rest_auth.views import LoginView
+
+from users.serializers import (
+    UserSerializer,
+    LogoutSerializer,
+    UserOurSerializer,
+    UserLoginSerializer,
+)
+from drf_spectacular.utils import extend_schema
+from abc import ABC, abstractmethod
+
+
+# Create your views here.
+
+
+class RegisterView(APIView):
+    """user registration view."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(request=UserSerializer, responses={201: UserSerializer})
+    def post(self, request):
+        """post request for user login."""
+        serializer = UserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class LoginBaseView(ABC, LoginView):
+    """Login base view."""
+
+    def get_extra_payload(self):
+        """return extra payload for login view."""
+        return {}
+
+    def get_token(self, user):
+        """return refresh token for user."""
+        refresh_token = RefreshToken.for_user(user)
+        for key, value in self.get_extra_payload().items():
+            refresh_token[key] = value
+        return refresh_token
+
+    @abstractmethod
+    def login(self):
+        """login use."""
+
+    def get_response(self):
+        data = {}
+
+        refresh = self.get_token(self.user)
+
+        data["refresh"] = str(refresh)
+        data["access"] = str(refresh.access_token)
+        data.update(self.get_extra_payload())
+
+        return Response(data)
+
+
+@extend_schema(request={200: UserLoginSerializer}, responses={204: UserOurSerializer})
+class LoginView(LoginBaseView):
+    """user login view."""
+
+    def login(self):
+        """login use."""
+        self.user = self.serializer.validated_data["user"]
+        return self.user
+
+    def get_extra_payload(self):
+        """get extra payload for login view."""
+        return UserSerializer(self.user).data
+
+
+class LogoutView(APIView):
+    """user logout view."""
+
+    permission_classes = [permissions.AllowAny]
+    serializer_class = LogoutSerializer
+
+    @extend_schema(request=LogoutSerializer, responses={204: None})
+    def post(self, request):
+        """post request for user logout."""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        refresh = serializer.validated_data.pop("refresh")
+
+        try:
+            token = RefreshToken(refresh)
+            token.blacklist()
+            logout(request)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
