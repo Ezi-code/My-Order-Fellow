@@ -47,16 +47,25 @@ class VerifyOTPView(APIView):
     @extend_schema(request=VerifyOTPSerializer)
     def post(self, request):
         """post request for OTP verification."""
+        serializer = VerifyOTPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        otp = serializer.validated_data.get("otp")
         email = request.query_params.get("email")
-        otp = request.data.get("otp")
 
-        otp_in_db = OTP.objects.filter(user__email=email).last()
+        if not email:
+            return Response(
+                {"detail": "Email is required in query parameters."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        otp_in_db = OTP.objects.filter(user__email=email, is_used=False).last()
         if not otp_in_db:
-            return Response("OTP does not exist!", status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "OTP does not exist or has already been used."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if str(otp) == str(otp_in_db.code):
-            if otp_in_db.is_used:
-                raise Http404("OTP is already used!")
             otp_in_db.is_used = True
             otp_in_db.save()
             activate_user_account.enqueue(otp_in_db.pk)

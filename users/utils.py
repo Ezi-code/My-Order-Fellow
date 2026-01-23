@@ -9,24 +9,27 @@ from random import randint
 
 def generate_otp(user) -> str:
     """Generate a 6-digit OTP.
-    The method should generate a random 6-digit OTP code
-    that will be sent to the user through sent_otp_via_mail task."""
 
-    otp = randint(100000, 999999)
-    try:
-        if OTP.objects.filter(code=str(otp).zfill(6)).exists():
-            return "An active OTP already exists for this user."
-        OTP.objects.create(code=str(otp).zfill(6), user=user)
-    except Exception as e:
-        return str(e)
-    return send_otp_via_email.enqueue(user.email, str(otp).zfill(6))
+    The method should generate a random 6-digit OTP code
+    that will be sent to the user through sent_otp_via_mail task.
+    """
+    otp_code = str(randint(100000, 999999))
+    if OTP.objects.filter(code=otp_code, is_used=False).exists():
+        return generate_otp(user)
+
+    OTP.objects.create(code=otp_code, user=user)
+    return send_otp_via_email.enqueue(user.email, otp_code)
 
 
 @task(priority=1, queue_name="high_priority")
 def send_otp_via_email(email, otp):
     """Send OTP to the user's email address."""
     subject = "Your One-Time Password (OTP)"
-    message = f"Your OTP is: {otp}. Click on the link: http://localhost:8000/api/v1/users/verify-otp/?emal={email} to verify your account."
+    message = (
+        f"Your OTP is: {otp}. "
+        f"Click on the link: http://localhost:8000/api/v1/users/verify-otp/?email={email} "
+        f"to verify your account."
+    )
 
     email_from = settings.DEFAULT_FROM_EMAIL
     recipient_list = [email]
@@ -39,8 +42,9 @@ def activate_user_account(otp_id):
     has verified their otp received via email."""
 
     try:
-        user = OTP.objects.get(pk=otp_id).user
+        otp = OTP.objects.select_related("user").get(pk=otp_id)
+        user = otp.user
         user.is_active = True
         user.save()
-    except Exception as e:
-        raise str(e)
+    except OTP.DoesNotExist:
+        pass
