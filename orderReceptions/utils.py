@@ -18,3 +18,16 @@ def send_order_received_confirmation(order):
     email_from = settings.DEFAULT_FROM_EMAIL
     recipient_list = [order.customer_details.email]
     send_mail(subject, message, email_from, recipient_list)
+
+
+@task(priority=1, queue_name="high_priority")
+def send_order_status_update_email(order):
+    """send order status update email to customer."""
+    subject = "Order Status"
+    message = (
+        f"Hello {order.customer_details.name}, Your order: {order.id} "
+        f"is now in {order.status} status"
+    )
+    email_from = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [order.customer_details.email]
+    send_mail(subject, message, email_from, recipient_list)

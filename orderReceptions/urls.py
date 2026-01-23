@@ -11,5 +11,10 @@ urlpatterns = [
         "orderreceptions/",
         views.OrderDetailListView.as_view(),
         name="orderreceptions-list",
-    )
+    ),
+    path(
+        "orderreceptions/<uuid:pk>/",
+        views.OrderDetailView.as_view(),
+        name="orderreceptions-detail",
+    ),
 ]
