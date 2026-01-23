@@ -9,7 +9,13 @@ class IsVerifiedUser(BasePermission):
     a user is said to be verified if their KYC is approved.
     """
 
-    def has_object_permission(self, request, view, obj):
+    def has_permission(self, request, view):
         if request.user and request.user.is_authenticated:
-            return True if UserKYC.objects.get(users=request.user).approved else False
+            try:
+                return UserKYC.objects.get(users=request.user).approved
+            except UserKYC.DoesNotExist:
+                return False
         return False
+
+    def has_object_permission(self, request, view, obj):
+        return self.has_permission(request, view)
