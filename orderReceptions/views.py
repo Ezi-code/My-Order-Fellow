@@ -4,6 +4,7 @@ from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from orderReceptions.serializers import OrderDetailSerializer
 from orderReceptions.models import OrderDetails, OrderStatusHistory
 from drf_spectacular.utils import extend_schema
@@ -13,6 +14,55 @@ from orderReceptions.utils import (
     send_order_deleted_email,
 )
 from base.permissions import IsVerifiedUser
+from users.utils import verify_webhook_signature
+
+
+class WebhookOrderView(APIView):
+    '''Webhook endpoint for receiving order data from e-commerce platform.'''
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """
+        Handle incoming webhook data.
+        Verifies webhook signature, auto-regenerates expired secrets,
+        and auto-creates secrets for KYC-verified businesses.
+        """
+        # Get credentials from headers
+        api_key = request.headers.get("X-API-Key")
+        signature = request.headers.get("X-Webhook-Signature")
+        
+        # Verify webhook signature
+        is_valid, webhook_secret, error_msg = verify_webhook_signature(
+            api_key,
+            signature,
+            request.body
+        )
+        
+        if not is_valid:
+            return Response(
+                {"error": error_msg},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Process webhook data
+        try:
+            serializer = OrderDetailSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            
+            # Trigger notifications
+            send_order_received_confirmation.enqueue(str(serializer.instance.pk))
+            
+            return Response(
+                {"status": "success", "order_id": str(serializer.instance.pk)},
+                status=status.HTTP_201_CREATED
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class OrderDetailListView(APIView):

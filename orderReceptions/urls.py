@@ -7,6 +7,14 @@ app_name = "orderReceptions"
 
 
 urlpatterns = [
+    # Webhook endpoint for external services
+    path(
+        "webhooks/orders/",
+        views.WebhookOrderView.as_view(),
+        name="webhook-orders"
+    ),
+    
+    # Regular API endpoints
     path(
         "orderreceptions/",
         views.OrderDetailListView.as_view(),
