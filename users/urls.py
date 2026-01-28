@@ -10,4 +10,7 @@ urlpatterns = [
     path("users/auth/logout/", views.LogoutView.as_view(), name="logout"),
     path("users/auth/register/", views.RegisterView.as_view(), name="register"),
     path("users/verify-otp/", views.VerifyOTPView.as_view(), name="verify-otp"),
+    path("users/request-otp/", views.RequestOTPView.as_view(), name="request-otp"),
+    path("users/kyc/", views.KYCView.as_view(), name="kyc"),
+    path("users/kyc/<uuid:pk>/", views.KYCApprovalView.as_view(), name="kyc-approval"),
 ]

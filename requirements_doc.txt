@@ -1,0 +1,110 @@
+My Order Fellow
+Project Overview
+My Order Fellow is a SaaS application designed to help e-commerce companies provide
+real-time order tracking updates to their customers.
+The platform integrates with external e-commerce applications via webhooks. Once an order is
+received, My Order Fellow manages tracking subscriptions, listens for status updates from the
+e-commerce platform, and relays those updates to end users through notifications.
+Core Objective
+To build a scalable SaaS platform that:
+●​
+●​
+●​
+●​
+Accepts order data from external e-commerce systems
+Tracks order status updates
+Notifies customers in real time
+Demonstrates best practices in backend architecture, security, and API design
+User Roles
+1.​ E-commerce Company (B2B Client)
+○​ Registers and manages an account
+○​ Integrates their platform via webhook
+○​ Sends order and tracking updates
+2.​ End Customer (Order Owner)
+○​ Receives tracking notifications via email
+Functional Requirements
+1. Authentication & Onboarding
+E-commerce Company Registration
+●​ Company creates an account on My Order Fellow
+●​ Required fields:
+○​ Company name○​ Business email
+○​ Password
+Email Verification
+●​ System sends a 6-digit OTP to the registered email
+●​ Account is activated after OTP verification
+KYC Process
+●​ Company submits KYC information:
+○​ Business registration number
+○​ Business address
+○​ Contact person details
+●​ Admin reviews and approves/rejects KYC
+●​ Only approved companies can activate webhooks
+2. Order Intake & Tracking Process
+Order Reception (Webhook-Based)
+●​ Registered e-commerce companies send order data to My Order Fellow via webhook
+(mock)
+●​ Sample order data may include:
+○​ Order ID
+○​ Customer email / phone
+○​ Item summary
+○​ Delivery address
+○​ Initial tracking status
+Tracking Subscription Initialization​
+Once an order is received:
+●​ The order is stored in the system
+●​ Tracking is automatically activated
+●​ A confirmation notification is sent to the end customer
+3. Tracking Status Updates
+Listening for Updates
+●​ My Order Fellow continuously listens for tracking updates from the e-commerce platform●​ Updates are received via webhook events
+Supported Status Flow​
+Each order can transition through the following statuses:
+●​ PENDING
+●​ IN TRANSIT
+●​ OUT FOR DELIVERY
+●​ DELIVERED
+Status Update Rules
+●​ Each update may include:
+○​ New status
+○​ Timestamp
+○​ Optional additional note (e.g., "Package arrived at Lagos hub")
+●​ Status history must be stored for audit and display
+4. Notifications
+Customer Notifications
+●​ Notification is sent when:
+○​ Tracking is successfully activated
+○​ Order status changes
+Notification Channels
+●​ Email notifications
+Non-Functional Requirements
+Security
+●​ Secure authentication (hashed passwords)
+●​ Webhook authentication using secret keys
+●​ Rate limiting for webhook endpointsSuggested Tech Stack (Flexible for Interns)
+Backend
+●​ Node.js (NestJS / Express) or Python (FastAPI / Django)
+Database
+●​ PostgreSQL (recommended)
+Notifications
+●​ Email service (SMTP / SendGrid / Mailgun – mock allowed)
+Learning Outcomes
+●​
+●​
+●​
+●​
+●​
+●​
+SaaS product thinking
+Webhook design and consumption
+Authentication and KYC workflows
+Event-driven architecture
+Notification systems
+Clean API documentation
+Project Phases
+1.​ Authentication & Company Onboarding
+2.​ Webhook Order Intake (Mock)
+3.​ Tracking Status Management
+4.​ Notifications
+5.​ Admin Review & KYC Approval
+6.​ Documentation & Demo
+ArchSaint Nexus – Building with purpose, clarity, and craftsmanship.

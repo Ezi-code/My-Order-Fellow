@@ -10,7 +10,7 @@ class UserKYCAdmin(admin.ModelAdmin):
 
     list_display = ("business_registration_number", "approved")
     list_filter = ("approved",)
-    search_fields = ("user", "business_registration_number")
+    search_fields = ("user__email", "business_registration_number")
     ordering = ["business_registration_number"]
 
 

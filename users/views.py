@@ -9,15 +9,17 @@ from django.contrib.auth import logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from dj_rest_auth.views import LoginView
 
-from users.models import OTP
-from .utils import activate_user_account, generate_otp
+from users.models import OTP, User, UserKYC
+from .utils import activate_user_account, generate_otp, send_kyc_details_submitted_email
 
 from users.serializers import (
+    KYCSerializer,
     UserSerializer,
     LogoutSerializer,
     UserOurSerializer,
     UserLoginSerializer,
     VerifyOTPSerializer,
+    RequestOTPSerializer,
 )
 from drf_spectacular.utils import extend_schema
 from abc import ABC, abstractmethod
@@ -133,3 +135,69 @@ class LogoutView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RequestOTPView(APIView):
+    """request user otp view.
+    Allow users to request an otp in an instance where OTP verification
+    failed during registration process."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(request=RequestOTPSerializer)
+    def post(self, request) -> Response:
+        """post request for user otp verification."""
+
+        email = request.data.get("email")
+
+        try:
+            user = User.objects.get(email=email)
+            print(user.is_active)
+        except User.DoesNotExist:
+            return Response("User does not exist!", status=status.HTTP_404_NOT_FOUND)
+
+        if user and not user.is_active:
+            generate_otp(user)
+
+        return Response("OTP sent to your email.", status=status.HTTP_200_OK)
+
+
+class KYCView(APIView):
+    """user kyc view."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(responses={200: KYCSerializer})
+    def get(self, request) -> Response:
+        """get user kyc."""
+        serializer = KYCSerializer(request.user.kyc, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request) -> Response:
+        """create user kyc."""
+        serializer = KYCSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        send_kyc_details_submitted_email.enqueue(serializer.instance.pk)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class KYCApprovalView(APIView):
+    """user kyc update view."""
+
+    permission_classes = [permissions.IsAdminUser]
+
+    def patch(self, request, pk=None) -> Response:
+        """update user kyc."""
+        try:
+            kyc = UserKYC.objects.get(pk=pk)
+        except UserKYC.DoesNotExist:
+            return Response("KYC does not exist!", status=status.HTTP_404_NOT_FOUND)
+
+        serializer = KYCSerializer(
+            kyc, request.data, partial=True, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

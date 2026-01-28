@@ -40,12 +40,12 @@ class OTP(TimeStampedModel):
 class UserKYC(TimeStampedModel):
     """user kyc model."""
 
-    users = models.ForeignKey(User, on_delete=models.CASCADE, related_name="kyc")
-    business_registration_number = models.CharField(max_length=10, unique=True)
-    business_address = models.CharField(max_length=10, unique=True)
-    contact_person_details = models.CharField(max_length=10, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="kyc")
+    business_registration_number = models.CharField(max_length=50, unique=True)
+    business_address = models.CharField(max_length=255)
+    contact_person_details = models.CharField(max_length=255)
     approved = models.BooleanField(default=False)
 
     def __str__(self):
-        """string representation of the user."""
+        """string representation of the kyc."""
         return self.business_registration_number

@@ -44,3 +44,38 @@ def activate_user_account(otp_id):
         user.save()
     except Exception as e:
         raise str(e)
+
+
+@task(priority=1, queue_name="high_priority")
+def send_kyc_details_submitted_email(kyc_id):
+    """send kyc details submitted email."""
+    from users.models import UserKYC
+
+    try:
+        user = UserKYC.objects.get(pk=kyc_id).user
+    except UserKYC.DoesNotExist:
+        return
+
+    subject = "KYC Details Submitted"
+    message = f"KYC details for {user.username} have been submitted."
+    email_from = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [user.email]
+    send_mail(subject, message, email_from, recipient_list)
+
+
+@task(priority=1, queue_name="high_priority")
+def send_kyc_details_approved_email(kyc_id):
+    """send kyc details approved email."""
+    from users.models import UserKYC
+
+    try:
+        user = UserKYC.objects.get(pk=kyc_id).user
+    except UserKYC.DoesNotExist:
+        return
+
+    subject = "KYC Details Approved"
+    message = f"KYC details for {user.username} have been approved"
+    email = user.email
+    email_from = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [email]
+    send_mail(subject, message, email_from, recipient_list)

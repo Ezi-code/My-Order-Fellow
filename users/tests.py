@@ -161,19 +161,19 @@ class TestUserKYC(TestCase):
     def test_user_kyc_creation(self):
         """test user kyc creation."""
         kyc = UserKYC.objects.create(
-            users=self.user,
+            user=self.user,
             business_registration_number="1234567890",
             business_address="123 Main St",
             contact_person_details="John Doe",
         )
-        self.assertEqual(kyc.users, self.user)
+        self.assertEqual(kyc.user, self.user)
         self.assertEqual(kyc.business_registration_number, "1234567890")
         self.assertFalse(kyc.approved)
 
     def test_user_kyc_str(self):
         """test user kyc string representation."""
         kyc = UserKYC.objects.create(
-            users=self.user,
+            user=self.user,
             business_registration_number="1234567890",
             business_address="123 Main St",
             contact_person_details="John Doe",
@@ -183,7 +183,7 @@ class TestUserKYC(TestCase):
     def test_user_kyc_unique_constraints(self):
         """test user kyc unique constraints."""
         UserKYC.objects.create(
-            users=self.user,
+            user=self.user,
             business_registration_number="1234567890",
             business_address="123 Main St",
             contact_person_details="John Doe",
@@ -198,26 +198,8 @@ class TestUserKYC(TestCase):
         # Duplicate business_registration_number
         with self.assertRaises(Exception):
             UserKYC.objects.create(
-                users=user2,
+                user=user2,
                 business_registration_number="1234567890",
                 business_address="456 Other St",
                 contact_person_details="Jane Doe",
-            )
-
-        # Duplicate business_address
-        with self.assertRaises(Exception):
-            UserKYC.objects.create(
-                users=user2,
-                business_registration_number="0987654321",
-                business_address="123 Main St",
-                contact_person_details="Jane Doe",
-            )
-
-        # Duplicate contact_person_details
-        with self.assertRaises(Exception):
-            UserKYC.objects.create(
-                users=user2,
-                business_registration_number="0987654321",
-                business_address="456 Other St",
-                contact_person_details="John Doe",
             )
