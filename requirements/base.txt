@@ -24,3 +24,4 @@ sqlparse==0.5.5
 uritemplate==4.2.0
 urllib3==2.6.3
 virtualenv==20.36.1
+django-tasks==0.11.0

@@ -3,7 +3,7 @@
 from django.core.mail import send_mail
 
 from django.conf import settings
-from django.tasks import task
+from django_tasks import task
 
 
 @task(queue_name="high_priority")
